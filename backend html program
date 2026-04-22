@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wearable Emotion & Safety Monitor</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font family -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+        }
+        .status-card {
+            transition: all 0.5s ease-in-out;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .hidden-view { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8">
+
+    <!-- Global Header -->
+    <header class="text-center mb-8">
+        <h1 class="text-3xl font-extrabold text-gray-800 tracking-tight">Proactive Care & Safety Monitor</h1>
+        <p class="text-gray-500 mt-1">Real-Time Emotional and Safety Insights</p>
+    </header>
+
+    <!-- Initialization and Loading Indicator -->
+    <div id="loading-indicator" class="text-center text-blue-500 font-semibold mb-4">
+        Initializing Application...
+    </div>
+
+    <!-- 1. LOGIN / SIGNUP VIEW -->
+    <section id="login-view" class="max-w-md mx-auto p-6 bg-white rounded-2xl shadow-xl hidden-view">
+        <h2 class="2xl font-bold text-gray-700 mb-6 text-center">Caregiver Login (Simulated)</h2>
+        <div class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" id="email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="caregiver@example.com">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password (6+ chars)</label>
+                <input type="password" id="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="••••••••">
+            </div>
+            
+            <div class="flex flex-col space-y-3">
+                <button id="login-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl transition duration-200">
+                    Login
+                </button>
+                <button id="signup-btn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-xl transition duration-200">
+                    Register New Caregiver Account
+                </button>
+            </div>
+        </div>
+        <p id="auth-error-message" class="text-red-500 text-sm mt-4 text-center hidden"></p>
+    </section>
+    
+    <!-- 2. MAIN DASHBOARD VIEW -->
+    <section id="dashboard-view" class="hidden-view">
+        <div id="auth-info" class="bg-white p-4 rounded-xl shadow mb-8 flex justify-between items-center max-w-4xl mx-auto">
+            <p class="text-xs font-medium text-gray-700">Logged in as: <span id="wearer-id" class="text-indigo-600 font-mono break-all"></span></p>
+            <div class="flex space-x-3">
+                <button id="manage-contacts-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-semibold py-1 px-3 rounded-full transition duration-200">
+                    Manage Contacts
+                </button>
+                <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-1 px-3 rounded-full transition duration-200">
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <main class="max-w-4xl mx-auto">
+            
+            <!-- Emotion Status Card -->
+            <div id="emotion-card" class="status-card p-6 sm:p-8 rounded-2xl mb-8 bg-white border-4 border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-700">Current Status:</h2>
+                    <span id="status-time" class="text-sm text-gray-500"></span>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <p id="emotion-display" class="text-5xl sm:text-6xl font-extrabold text-gray-900 leading-tight">... Awaiting Data ...</p>
+                    <p id="insight-display" class="lg mt-2 text-gray-600 font-medium">Monitoring is active and healthy.</p>
+                </div>
+                
+                <!-- Sensor Data -->
+                <div class="mt-6 pt-4 border-t border-gray-100 grid grid-cols-3 gap-4 text-center">
+                    <div class="p-2 bg-gray-50 rounded-lg">
+                        <p class="text-xs text-gray-500">HRV (SDNN)</p>
+                        <p id="data-hrv" class="text-base font-semibold text-gray-800">--</p>
+                    </div>
+                    <div class="p-2 bg-gray-50 rounded-lg">
+                        <p class="text-xs text-gray-500">GSR (Mean)</p>
+                        <p id="data-gsr" class="text-base font-semibold text-gray-800">--</p>
+                    </div>
+                    <div class="p-2 bg-gray-50 rounded-lg">
+                        <p class="text-xs text-gray-500">Accel (Var)</p>
+                        <p id="data-accel" class="text-base font-semibold text-gray-800">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control and Simulation Panel -->
+            <div class="bg-white p-6 rounded-2xl shadow">
+                <h2 class="xl font-bold text-gray-700 mb-4">Wearable Control Panel (Simulation)</h2>
+                <p class="text-sm text-gray-500 mb-4">Simulate a new sensor reading from the wearable device to test real-time monitoring and safety alerts. (Auto-updates the Caregiver Dashboard above.)</p>
+                
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <button id="simulate-calm" class="w-full sm:w-1/3 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-xl transition duration-200">
+                        Simulate Calm
+                    </button>
+                    <button id="simulate-stress" class="w-full sm:w-1/3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-4 rounded-xl transition duration-200">
+                        Simulate Stress
+                    </button>
+                    <button id="simulate-panic" class="w-full sm:w-1/3 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-xl transition duration-200 shadow-lg shadow-red-300">
+                        Simulate PANIC / SOS
+                    </button>
+                </div>
+                
+                <!-- Manual SOS Feature -->
+                <button id="manual-sos" class="w-full mt-4 bg-red-800 hover:bg-red-900 text-white font-extrabold py-3 px-4 rounded-xl transition duration-200 text-sm">
+                    MANUAL ALERT: SOS Button (Wearer Triggered)
+                </button>
+            </div>
+
+        </main>
+    </section>
+    
+    <!-- 3. TRUSTED CONTACTS VIEW -->
+    <section id="contacts-view" class="hidden-view max-w-4xl mx-auto">
+        <div class="mb-6">
+            <button id="back-to-dashboard-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-xl transition duration-200 flex items-center">
+                <!-- Inline SVG for back arrow -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                Back to Dashboard
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Add New Contact Form -->
+            <div class="bg-white p-6 rounded-2xl shadow-xl h-fit">
+                <h2 class="2xl font-bold text-gray-700 mb-4">Add New Trusted Contact</h2>
+                <p class="text-sm text-gray-500 mb-4">These contacts will receive GPS and alert information during a High Stress/Panic event.</p>
+                <div class="space-y-4">
+                    <div>
+                        <label for="contact-name" class="block text-sm font-medium text-gray-700">Name</label>
+                        <input type="text" id="contact-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Priya Sharma">
+                    </div>
+                    <div>
+                        <label for="contact-phone" class="block text-sm font-medium text-gray-700">Phone Number (Simulated)</label>
+                        <input type="tel" id="contact-phone" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="98765 43210">
+                    </div>
+                    <div>
+                        <label for="contact-email" class="block text-sm font-medium text-gray-700">Email Address (Simulated)</label>
+                        <input type="email" id="contact-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="priya.s@example.com">
+                    </div>
+                    <button id="add-contact-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl transition duration-200 mt-2">
+                        Add Contact
+                    </button>
+                    <p id="contact-error-message" class="text-red-500 text-sm mt-2 text-center hidden"></p>
+                </div>
+            </div>
+
+            <!-- Current Contacts List -->
+            <div class="bg-white p-6 rounded-2xl shadow-xl">
+                <h2 class="2xl font-bold text-gray-700 mb-4">Current Trusted Contacts</h2>
+                <p class="text-sm text-gray-500 mb-4">Maximum 3 contacts recommended.</p>
+                <div id="contacts-list" class="space-y-3">
+                    <!-- Contacts will be rendered here -->
+                    <p class="text-gray-400 italic">No contacts added yet.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Custom Notification Modal -->
+    <div id="notification-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full text-center">
+            <p id="notification-message" class="text-lg font-semibold text-gray-800 mb-4"></p>
+            <button onclick="document.getElementById('notification-modal').classList.add('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">
+                Close
+            </button>
+        </div>
+    </div>
+    
+    <!-- Application Logic -->
+    <script>
+        // --- GLOBAL VARIABLES & LOCAL STORAGE KEYS ---
+        let caregiverId = null; 
+        const STATUS_STORAGE_KEY = 'monitoring_status_'; // Prepended with caregiverId
+        const CONTACTS_STORAGE_KEY = 'trusted_contacts_'; // Prepended with caregiverId
+
+        // --- UI ELEMENTS (Definitions remain the same) ---
+        const loadingIndicator = document.getElementById('loading-indicator');
+        
+        // Login View Elements
+        const loginView = document.getElementById('login-view');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const authErrorMsg = document.getElementById('auth-error-message');
+        
+        // Dashboard View Elements
+        const dashboardView = document.getElementById('dashboard-view');
+        const logoutBtn = document.getElementById('logout-btn');
+        const manageContactsBtn = document.getElementById('manage-contacts-btn');
+        const wearerIdSpan = document.getElementById('wearer-id');
+        const emotionCard = document.getElementById('emotion-card');
+        const emotionDisplay = document.getElementById('emotion-display');
+        const insightDisplay = document.getElementById('insight-display');
+        const statusTime = document.getElementById('status-time');
+        const dataHrv = document.getElementById('data-hrv');
+        const dataGsr = document.getElementById('data-gsr');
+        const dataAccel = document.getElementById('data-accel');
+        const modal = document.getElementById('notification-modal');
+        const modalMessage = document.getElementById('notification-message');
+
+        // Contacts View Elements
+        const contactsView = document.getElementById('contacts-view');
+        const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
+        const contactNameInput = document.getElementById('contact-name');
+        const contactPhoneInput = document.getElementById('contact-phone');
+        const contactEmailInput = document.getElementById('contact-email');
+        const addContactBtn = document.getElementById('add-contact-btn');
+        const contactsList = document.getElementById('contacts-list');
+        const contactErrorMsg = document.getElementById('contact-error-message');
+
+
+        // --- VIEW MANAGEMENT ---
+        function switchView(viewName) {
+            loginView.classList.add('hidden-view');
+            dashboardView.classList.add('hidden-view');
+            contactsView.classList.add('hidden-view');
+            loadingIndicator.classList.add('hidden');
+            authErrorMsg.classList.add('hidden');
+            
+            if (viewName === 'login') {
+                loginView.classList.remove('hidden-view');
+            } else if (viewName === 'dashboard') {
+                dashboardView.classList.remove('hidden-view');
+                loadMonitoringDataFromLocal(); // Load data when showing dashboard
+            } else if (viewName === 'contacts') {
+                contactsView.classList.remove('hidden-view');
+                loadContactsFromLocal(); // Load contacts when entering this view
+            }
+        }
+
+        // --- ML/EMOTION LOGIC (Simplified) ---
+        const EMOTIONS = {
+            0: "Calm/Neutral",
+            1: "Happy/Engaged",
+            2: "Mild Stress/Anxiety",
+            3: "High Stress/Panic"
+        };
+        const CRITICAL_GSR_THRESHOLD = 5.0; 
+
+        function classifyEmotion(hrv_sdnn, gsr_mean, accel_var) {
+            if (gsr_mean > 4.5 && hrv_sdnn < 30) {
+                return 3; // High Stress/Panic
+            } else if (gsr_mean > 3.0 && hrv_sdnn < 45) {
+                return 2; // Mild Stress/Anxiety
+            } else if (gsr_mean < 3.5 && hrv_sdnn < 65) {
+                return 1; // Happy/Engaged
+            } else {
+                return 0; // Calm/Neutral
+            }
+        }
+
+        function determineSafetyAlert(emotionId, rawGsr) {
+            let isCritical = false;
+            let reason = "";
+
+            if (emotionId === 3) {
+                isCritical = true;
+                reason = "ML Model detected High Stress/Panic (Automated Alert).";
+            } else if (rawGsr > CRITICAL_GSR_THRESHOLD) {
+                isCritical = true;
+                reason = `Raw GSR threshold exceeded (${rawGsr.toFixed(2)} S/m) - Potential unclassified panic.`;
+            }
+            
+            return { isCritical, reason };
+        }
+
+        // --- DATA GENERATION ---
+
+        function generateSensorData(scenario) {
+            const currentHrv = parseFloat(dataHrv.textContent) || randomRange(50, 60);
+            const currentGsr = parseFloat(dataGsr.textContent) || randomRange(1.0, 2.0);
+            const currentAccel = parseFloat(dataAccel.textContent) || randomRange(0.1, 0.5);
+
+            let hrv_sdnn, gsr_mean, accel_var;
+
+            switch (scenario) {
+                case 'calm':
+                    hrv_sdnn = randomRange(55, 80);
+                    gsr_mean = randomRange(0.8, 2.5);
+                    accel_var = randomRange(0.05, 0.4);
+                    break;
+                case 'stress':
+                    hrv_sdnn = randomRange(25, 45);
+                    gsr_mean = randomRange(3.5, 5.0);
+                    accel_var = randomRange(0.5, 1.2);
+                    break;
+                case 'panic':
+                    hrv_sdnn = randomRange(10, 25);
+                    gsr_mean = randomRange(5.0, 7.5);
+                    accel_var = randomRange(1.5, 3.5);
+                    break;
+                default: 
+                    hrv_sdnn = currentHrv;
+                    gsr_mean = currentGsr;
+                    accel_var = currentAccel;
+                    break;
+            }
+            
+            return { hrv: hrv_sdnn, gsr: gsr_mean, accel: accel_var };
+        }
+
+        function randomRange(min, max) {
+            return parseFloat((Math.random() * (max - min) + min).toFixed(2));
+        }
+
+        // Utility to create a localStorage-safe key from an email address
+        function createCaregiverKey(email) {
+            return email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        }
+
+        // --- AUTHENTICATION HANDLERS (SIMULATED) ---
+        
+        function displayAuthError(message) {
+            authErrorMsg.textContent = message;
+            authErrorMsg.classList.remove('hidden');
+        }
+
+        function handleAuthSuccess(email) {
+            caregiverId = createCaregiverKey(email);
+            localStorage.setItem('caregiverEmail', email);
+            localStorage.setItem('caregiverId', caregiverId);
+            wearerIdSpan.textContent = email; // Show the email in the UI
+            switchView('dashboard');
+            // The dashboard view trigger will call loadMonitoringDataFromLocal()
+        }
+
+        function handleLogin() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            authErrorMsg.classList.add('hidden');
+            
+            if (!email || !password) return displayAuthError("Please enter both email and password.");
+            
+            if (password.length < 6) {
+                 return displayAuthError("Login Failed: Password must be 6+ characters.");
+            }
+            // For a local app, any valid-looking credentials will "log in" successfully
+            handleAuthSuccess(email);
+            emailInput.value = '';
+            passwordInput.value = '';
+        }
+
+        function handleSignup() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            authErrorMsg.classList.add('hidden');
+            
+            if (!email || !password) return displayAuthError("Please enter both email and password.");
+
+            if (password.length < 6) {
+                 return displayAuthError("Signup Failed: Password must be 6+ characters.");
+            }
+            
+            handleAuthSuccess(email);
+            emailInput.value = '';
+            passwordInput.value = '';
+            showNotification("Registration successful! You are now logged in.");
+        }
+
+        function handleLogout() {
+            // Clear persistent data
+            localStorage.removeItem('caregiverEmail');
+            localStorage.removeItem('caregiverId');
+            
+            // Clear monitoring and contacts data for the current user
+            localStorage.removeItem(STATUS_STORAGE_KEY + caregiverId);
+            localStorage.removeItem(CONTACTS_STORAGE_KEY + caregiverId);
+            
+            caregiverId = null;
+            switchView('login');
+        }
+
+
+        // --- APPLICATION INITIALIZATION (LOCAL) ---
+
+        function initializeApplication() {
+            const savedEmail = localStorage.getItem('caregiverEmail');
+            const savedId = localStorage.getItem('caregiverId');
+            
+            loadingIndicator.classList.add('hidden');
+
+            if (savedEmail && savedId) {
+                // Automatically load dashboard using persistent ID
+                caregiverId = savedId;
+                wearerIdSpan.textContent = savedEmail; 
+                switchView('dashboard');
+            } else {
+                // Show login screen
+                switchView('login');
+            }
+        }
+
+        // --- LOCAL STORAGE WRITE LOGIC (Monitoring Status) ---
+
+        function updateStatus(sensorData, emotionId, manualSos = false) {
+            const currentCaregiverId = localStorage.getItem('caregiverId');
+            if (!currentCaregiverId) {
+                showNotification("Error: Session expired. Please log in to simulate data.");
+                switchView('login');
+                return;
+            }
+
+            const { hrv, gsr, accel } = sensorData;
+            
+            const emotionState = EMOTIONS[emotionId];
+            const { isCritical, reason } = determineSafetyAlert(emotionId, gsr);
+            const safetyAlert = isCritical || manualSos;
+            const alertReason = manualSos ? "Manual SOS Triggered by Wearer." : reason;
+
+            const monitoringData = {
+                emotion: emotionState,
+                safetyAlert: safetyAlert,
+                alertReason: safetyAlert ? alertReason : null,
+                timestamp: new Date().toISOString(), // Store as ISO string
+                sensorData: { hrv, gsr, accel },
+            };
+
+            try {
+                // Save data to localStorage
+                localStorage.setItem(STATUS_STORAGE_KEY + currentCaregiverId, JSON.stringify(monitoringData));
+                console.log("Monitoring data successfully written to localStorage.");
+                
+                // Update UI immediately (simulating real-time update)
+                updateUIDisplay(monitoringData);
+
+                // --- LOGIC FOR SOS CONTACT NOTIFICATION ---
+                if (safetyAlert) {
+                    let notificationText = `CRITICAL ALERT: ${alertReason}`;
+                    
+                    const contacts = getContactsFromLocal(); // Get contacts locally
+                    
+                    if (contacts.length > 0) {
+                        const contactNames = contacts.map(c => c.name).join(', ');
+                        notificationText += ` Trusted contacts being alerted: ${contactNames}.`;
+                    } else {
+                        notificationText += " No trusted contacts registered. Please add contacts in the 'Manage Contacts' section.";
+                    }
+
+                    showNotification(notificationText);
+                }
+                // --- END LOGIC ---
+
+            } catch (e) {
+                console.error("Error writing document to localStorage: ", e);
+                showNotification(`Error saving data locally: ${e.message}`);
+            }
+        }
+
+        // --- LOCAL STORAGE READ LOGIC (Monitoring Status) ---
+
+        function loadMonitoringDataFromLocal() {
+            const currentCaregiverId = localStorage.getItem('caregiverId');
+            if (!currentCaregiverId) return;
+
+            try {
+                const storedData = localStorage.getItem(STATUS_STORAGE_KEY + currentCaregiverId);
+                if (storedData) {
+                    const data = JSON.parse(storedData);
+                    updateUIDisplay(data);
+                } else {
+                    console.log("No initial data found in local storage. Waiting for first reading.");
+                    emotionDisplay.textContent = "Ready to Monitor";
+                    insightDisplay.textContent = "Click a button to simulate the first reading from the wearable.";
+                    dataHrv.textContent = '--';
+                    dataGsr.textContent = '--';
+                    dataAccel.textContent = '--';
+                    statusTime.textContent = '';
+                }
+            } catch (error) {
+                console.error("Error loading monitoring data from local storage:", error);
+            }
+        }
+        
+        // --- CONTACT MANAGEMENT LOGIC (LOCAL STORAGE) ---
+
+        function displayContactError(message) {
+            contactErrorMsg.textContent = message;
+            contactErrorMsg.classList.remove('hidden');
+            setTimeout(() => contactErrorMsg.classList.add('hidden'), 3000);
+        }
+        
+        function getContactsFromLocal() {
+            const currentCaregiverId = localStorage.getItem('caregiverId');
+            if (!currentCaregiverId) return [];
+            
+            try {
+                const storedContacts = localStorage.getItem(CONTACTS_STORAGE_KEY + currentCaregiverId);
+                return storedContacts ? JSON.parse(storedContacts) : [];
+            } catch (e) {
+                console.error("Error parsing contacts from local storage:", e);
+                return [];
+            }
+        }
+
+        function saveContactsToLocal(contacts) {
+            const currentCaregiverId = localStorage.getItem('caregiverId');
+            if (!currentCaregiverId) return;
+            
+            try {
+                localStorage.setItem(CONTACTS_STORAGE_KEY + currentCaregiverId, JSON.stringify(contacts));
+                loadContactsFromLocal(); // Refresh UI after saving
+            } catch (e) {
+                console.error("Error saving contacts to local storage:", e);
+            }
+        }
+
+        function loadContactsFromLocal() {
+            const contacts = getContactsFromLocal();
+            renderContacts(contacts);
+        }
+
+        function addContact() {
+            const name = contactNameInput.value.trim();
+            const phone = contactPhoneInput.value.trim();
+            const email = contactEmailInput.value.trim();
+            contactErrorMsg.classList.add('hidden');
+
+            if (!name || !phone || !email) {
+                return displayContactError("All fields (Name, Phone, Email) are required.");
+            }
+
+            const newContact = {
+                id: crypto.randomUUID(), // Generate a unique ID for deletion
+                name: name,
+                phone: phone,
+                email: email,
+                timestamp: new Date().toISOString(),
+            };
+            
+            const contacts = getContactsFromLocal();
+            contacts.push(newContact);
+            saveContactsToLocal(contacts);
+            
+            showNotification(`Contact '${name}' added successfully!`);
+            // Clear inputs
+            contactNameInput.value = '';
+            contactPhoneInput.value = '';
+            contactEmailInput.value = '';
+        }
+
+        function deleteContact(contactId, contactName) {
+            let contacts = getContactsFromLocal();
+            contacts = contacts.filter(c => c.id !== contactId);
+            saveContactsToLocal(contacts);
+            showNotification(`Contact '${contactName}' deleted.`);
+        }
+        
+        function renderContacts(contacts) {
+            contactsList.innerHTML = ''; // Clear existing list
+
+            if (contacts.length === 0) {
+                contactsList.innerHTML = '<p class="text-gray-400 italic">No contacts added yet.</p>';
+                return;
+            }
+
+            contacts.forEach(contact => {
+                const contactElement = document.createElement('div');
+                contactElement.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg shadow-sm';
+                contactElement.innerHTML = `
+                    <div class="truncate">
+                        <p class="font-semibold text-gray-800">${contact.name}</p>
+                        <p class="text-sm text-gray-600">${contact.phone}</p>
+                        <p class="text-xs text-gray-500 truncate">${contact.email}</p>
+                    </div>
+                    <button data-id="${contact.id}" data-name="${contact.name}" class="delete-contact-btn text-red-500 hover:text-red-700 font-semibold text-sm py-1 px-2 rounded-lg transition duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                `;
+                contactsList.appendChild(contactElement);
+            });
+
+            // Add event listeners to the new delete buttons
+            document.querySelectorAll('.delete-contact-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    const name = e.currentTarget.getAttribute('data-name');
+                    deleteContact(id, name);
+                });
+            });
+        }
+
+
+        // --- UI UPDATE FUNCTION (Monitoring Status) ---
+
+        function updateUIDisplay(data) {
+            const { emotion, safetyAlert, alertReason, sensorData, timestamp } = data;
+            
+            // Note: timestamp is an ISO string now, not a Firestore timestamp object
+            const dateObj = new Date(timestamp);
+            const timeStr = dateObj ? dateObj.toLocaleTimeString() : 'N/A';
+            statusTime.textContent = `Last update: ${timeStr}`;
+
+            // Update main status card look and text
+            emotionDisplay.textContent = emotion;
+            dataHrv.textContent = sensorData.hrv.toFixed(2);
+            dataGsr.textContent = sensorData.gsr.toFixed(2);
+            dataAccel.textContent = sensorData.accel.toFixed(2);
+
+            // Determine colors and messages
+            let bgColor, borderColor, insightText;
+
+            if (safetyAlert) {
+                bgColor = 'bg-red-100';
+                borderColor = 'border-red-600';
+                insightText = `!!! CRITICAL SAFETY ALERT !!! ${alertReason || 'Immediate action required. GPS tracking activated.'}`;
+            } else if (emotion === EMOTIONS[2]) {
+                bgColor = 'bg-yellow-100';
+                borderColor = 'border-yellow-500';
+                insightText = 'Proactive Care: Subject is showing signs of moderate stress or anxiety. Check-in advised.';
+            } else if (emotion === EMOTIONS[1]) {
+                bgColor = 'bg-green-100';
+                borderColor = 'border-green-500';
+                insightText = 'Mental Well-being: Subject is happy and engaged. Status is positive.';
+            } else {
+                bgColor = 'bg-gray-100';
+                borderColor = 'border-gray-400';
+                insightText = 'Status is Calm. Normal baseline monitoring active.';
+            }
+
+            // Apply styles
+            emotionCard.className = `status-card p-6 sm:p-8 rounded-2xl mb-8 ${bgColor} ${borderColor} border-4`;
+            insightDisplay.textContent = insightText;
+        }
+        
+        // --- UTILITY: CUSTOM MODAL NOTIFICATION ---
+
+        let notificationTimeout;
+        function showNotification(message, duration = 4000) {
+            clearTimeout(notificationTimeout);
+            modalMessage.textContent = message;
+            modal.classList.remove('hidden');
+            
+            notificationTimeout = setTimeout(() => {
+                modal.classList.add('hidden');
+            }, duration);
+        }
+
+        // --- EVENT LISTENERS ---
+
+        document.getElementById('simulate-calm').addEventListener('click', () => {
+            const data = generateSensorData('calm');
+            const emotionId = classifyEmotion(data.hrv, data.gsr, data.accel);
+            updateStatus(data, emotionId);
+        });
+
+        document.getElementById('simulate-stress').addEventListener('click', () => {
+            const data = generateSensorData('stress');
+            const emotionId = classifyEmotion(data.hrv, data.gsr, data.accel);
+            updateStatus(data, emotionId);
+        });
+
+        document.getElementById('simulate-panic').addEventListener('click', () => {
+            const data = generateSensorData('panic');
+            const emotionId = 3; // Force panic state for dramatic simulation
+            updateStatus(data, emotionId);
+        });
+        
+        document.getElementById('manual-sos').addEventListener('click', () => {
+            const data = generateSensorData('manual');
+            const emotionId = classifyEmotion(data.hrv, data.gsr, data.accel);
+            updateStatus(data, emotionId, true); // true for manualSos
+        });
+        
+        // Auth Listeners
+        loginBtn.addEventListener('click', handleLogin);
+        signupBtn.addEventListener('click', handleSignup);
+        logoutBtn.addEventListener('click', handleLogout);
+
+        // Navigation Listeners
+        manageContactsBtn.addEventListener('click', () => switchView('contacts'));
+        backToDashboardBtn.addEventListener('click', () => switchView('dashboard'));
+        
+        // Contact Management Listener
+        addContactBtn.addEventListener('click', addContact);
+
+
+        // Initialize the application
+        window.onload = initializeApplication;
+
+    </script>
+</body>
+</html>
